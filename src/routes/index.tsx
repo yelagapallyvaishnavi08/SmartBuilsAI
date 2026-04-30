@@ -8,10 +8,10 @@ import heroImg from "@/assets/hero-construction.jpg";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "BuildAI Pro — AI-Powered Construction Planning" },
-      { name: "description", content: "Plan construction projects with precision. Get worker requirements, timelines, blueprints, and cost analysis in seconds." },
-      { property: "og:title", content: "BuildAI Pro — AI-Powered Construction Planning" },
-      { property: "og:description", content: "Smart calculations, blueprints, and week-by-week schedules for any project." },
+      { title: "Smart Build AI — Intelligent Construction Planning" },
+      { name: "description", content: "Location-based cost estimation, AI suggestions, budget comparison, advanced blueprints and visual analytics." },
+      { property: "og:title", content: "Smart Build AI — Intelligent Construction Planning" },
+      { property: "og:description", content: "AI-driven smart planning with city-aware pricing, budget tools, and visualization." },
     ],
   }),
   component: HomePage,
@@ -34,10 +34,10 @@ function HomePage() {
               <Sparkles className="h-3.5 w-3.5 text-accent" /> Smart construction intelligence
             </span>
             <h1 className="mt-6 text-5xl font-bold leading-tight tracking-tight text-white md:text-7xl">
-              AI-Powered <span className="bg-[image:var(--gradient-accent)] bg-clip-text text-transparent">Construction</span> Planning
+              Smart Build <span className="bg-[image:var(--gradient-accent)] bg-clip-text text-transparent">AI</span> Construction Planning
             </h1>
             <p className="mt-6 max-w-2xl text-lg text-white/80 md:text-xl">
-              Get accurate worker requirements, realistic timelines, detailed blueprints, and comprehensive cost analysis in seconds.
+              Location-aware cost estimates, AI-driven suggestions, budget comparison, advanced blueprints and visual analytics — all in seconds.
             </p>
             <div className="mt-10 flex flex-wrap gap-4">
               <Link to="/calculator" className="group inline-flex items-center gap-2 rounded-xl bg-[image:var(--gradient-accent)] px-7 py-3.5 text-base font-semibold text-accent-foreground shadow-[var(--shadow-glow)] transition-transform hover:-translate-y-0.5">
@@ -55,18 +55,18 @@ function HomePage() {
       {/* Features grid */}
       <section className="mx-auto max-w-7xl px-6 py-24">
         <div className="mx-auto max-w-2xl text-center">
-          <h2 className="text-4xl font-bold tracking-tight">Why Choose BuildAI Pro?</h2>
+          <h2 className="text-4xl font-bold tracking-tight">Why Choose Smart Build AI?</h2>
           <p className="mt-4 text-muted-foreground">Comprehensive features designed for modern construction management.</p>
         </div>
 
         <div className="mt-14 grid gap-6 md:grid-cols-3">
           {[
-            { icon: Calculator, title: "Smart Calculations", desc: "Algorithms calculate worker requirements, timelines, and costs based on project complexity and constraints." },
-            { icon: FileText, title: "Professional Blueprints", desc: "Auto-generated architectural blueprints with room layouts and dimensions for every floor." },
-            { icon: Clock, title: "Detailed Schedules", desc: "Comprehensive week-by-week construction schedules from site prep to final handover." },
-            { icon: Hammer, title: "Workforce Planning", desc: "Intelligent worker allocation across masons, helpers, steel workers, carpenters, supervisors." },
-            { icon: ShieldCheck, title: "Cost Transparency", desc: "Transparent breakdown of labor, materials, and overhead with customizable regional rates." },
-            { icon: Sparkles, title: "Real-Time Processing", desc: "Instant calculations and results to support faster, more confident decision-making." },
+            { icon: Calculator, title: "Location-Based Costing", desc: "City-aware multipliers for materials and labor across 10+ Indian markets — Mumbai to Tier-3 towns." },
+            { icon: Sparkles, title: "AI-Driven Suggestions", desc: "Smart recommendations for cost savings, timeline buffers, sustainability and crew management." },
+            { icon: ShieldCheck, title: "Budget Comparison", desc: "Set your budget and get instant variance analysis with actionable steps to stay on track." },
+            { icon: FileText, title: "Advanced Blueprints", desc: "Scaled SVG floor plans with positioned rooms, doors, windows and dimensional accuracy." },
+            { icon: Clock, title: "Visual Analytics", desc: "Cost donut charts, material breakdowns and Gantt-style timelines for clear insight." },
+            { icon: Hammer, title: "Workforce Planning", desc: "Intelligent allocation across masons, helpers, steel workers, carpenters and supervisors." },
           ].map(({ icon: Icon, title, desc }) => (
             <div key={title} className="group rounded-2xl border border-border bg-[image:var(--gradient-card)] p-7 shadow-[var(--shadow-card)] transition-all hover:-translate-y-1 hover:shadow-[var(--shadow-elegant)]">
               <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary text-primary-foreground transition-colors group-hover:bg-accent group-hover:text-accent-foreground">
@@ -83,7 +83,7 @@ function HomePage() {
       <section className="bg-secondary/40 py-24">
         <div className="mx-auto max-w-7xl px-6">
           <div className="mx-auto max-w-2xl text-center">
-            <h2 className="text-4xl font-bold tracking-tight">How BuildAI Pro Works</h2>
+            <h2 className="text-4xl font-bold tracking-tight">How Smart Build AI Works</h2>
             <p className="mt-4 text-muted-foreground">From project details to execution-ready plans in four steps.</p>
           </div>
           <div className="mt-14 grid gap-6 md:grid-cols-4">
