@@ -17,7 +17,7 @@ export function SiteHeader() {
             <HardHat className="h-5 w-5" />
           </span>
           <span className="text-lg font-bold tracking-tight">
-            BuildAI <span className="text-accent">Pro</span>
+            Smart Build <span className="text-accent">AI</span>
           </span>
         </Link>
         <nav className="hidden items-center gap-1 md:flex">

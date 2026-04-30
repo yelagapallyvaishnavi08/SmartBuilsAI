@@ -6,20 +6,20 @@ import { Calculator, FileText, Hammer, Sparkles, ShieldCheck, Clock, ArrowRight,
 export const Route = createFileRoute("/features")({
   head: () => ({
     meta: [
-      { title: "Features — BuildAI Pro" },
-      { name: "description", content: "Smart calculations, professional blueprints, weekly schedules, workforce planning and transparent costs." },
+      { title: "Features — Smart Build AI" },
+      { name: "description", content: "Location-based costing, AI suggestions, budget comparison, advanced blueprints, visual analytics and workforce planning." },
     ],
   }),
   component: FeaturesPage,
 });
 
 const features = [
-  { icon: Calculator, title: "Smart Calculations", desc: "Algorithms calculate worker requirements, timelines, and costs based on project complexity." },
-  { icon: FileText, title: "Professional Blueprints", desc: "Auto-generated architectural blueprints with room layouts and dimensions for every floor." },
-  { icon: Clock, title: "Detailed Schedules", desc: "Comprehensive week-by-week schedules covering site prep through final handover." },
-  { icon: Hammer, title: "Workforce Planning", desc: "Allocate masons, helpers, steel workers, carpenters, and supervisors intelligently." },
-  { icon: ShieldCheck, title: "Cost Transparency", desc: "Breakdown of labor, materials, and overhead with customizable regional rates." },
-  { icon: Sparkles, title: "Real-Time Processing", desc: "Instant calculations and results to support faster decision-making." },
+  { icon: Calculator, title: "Location-Based Costing", desc: "City-aware material & wage multipliers for 10+ markets — accurate estimates wherever you build." },
+  { icon: Sparkles, title: "AI-Driven Suggestions", desc: "Personalized tips for savings, scheduling, crew sizing, sustainability and risk mitigation." },
+  { icon: ShieldCheck, title: "Budget Comparison", desc: "Set your target budget and get instant variance analysis with corrective actions." },
+  { icon: FileText, title: "Advanced SVG Blueprints", desc: "Scaled floor plans with positioned rooms, doors, windows and accurate dimensions per floor." },
+  { icon: Clock, title: "Visual Timeline & Charts", desc: "Cost donut, material bars and Gantt-style schedules for at-a-glance project insight." },
+  { icon: Hammer, title: "Workforce Planning", desc: "Smart allocation across masons, helpers, steel workers, carpenters and supervisors." },
 ];
 
 const benefits = [
