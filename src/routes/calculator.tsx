@@ -1,5 +1,5 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
 import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
 import {
@@ -11,6 +11,8 @@ import {
   type FloorPlan,
   type Suggestion,
 } from "@/lib/construction";
+import { predictCost, geneticOptimize, type GAResult, type RegressionModel } from "@/lib/ml";
+import { getSession } from "@/lib/auth";
 import {
   Calculator as CalcIcon,
   Users,
@@ -28,6 +30,8 @@ import {
   Lightbulb,
   Info,
   PiggyBank,
+  Brain,
+  Dna,
 } from "lucide-react";
 
 export const Route = createFileRoute("/calculator")({
@@ -45,6 +49,15 @@ export const Route = createFileRoute("/calculator")({
 });
 
 function CalculatorPage() {
+  const navigate = useNavigate();
+  const [authChecked, setAuthChecked] = useState(false);
+  useEffect(() => {
+    if (!getSession()) {
+      navigate({ to: "/login" });
+    } else {
+      setAuthChecked(true);
+    }
+  }, [navigate]);
   const [form, setForm] = useState<CalcInput>({
     built_up_area: 1000,
     floors: "G+2",
@@ -69,6 +82,15 @@ function CalculatorPage() {
       50,
     );
   };
+
+  if (!authChecked) {
+    return (
+      <div className="min-h-screen bg-background">
+        <SiteHeader />
+        <div className="flex min-h-[60vh] items-center justify-center text-sm text-muted-foreground">Checking access…</div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -217,7 +239,7 @@ function CalculatorPage() {
           </div>
         </form>
 
-        {result && <Results result={result} />}
+        {result && <Results result={result} input={form} />}
       </section>
 
       <SiteFooter />
@@ -239,7 +261,7 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
   );
 }
 
-function Results({ result }: { result: CalcResult }) {
+function Results({ result, input }: { result: CalcResult; input: CalcInput }) {
   const { workers, timeline, cost, materials, blueprint, schedule, assumptions, location, suggestions, budget } = result;
   return (
     <div id="results" className="mt-12 space-y-8">
@@ -273,6 +295,10 @@ function Results({ result }: { result: CalcResult }) {
 
       {/* AI suggestions */}
       <SuggestionsCard suggestions={suggestions} />
+
+      {/* ML: Linear Regression + Genetic Algorithm */}
+      <MLInsights input={input} actualTotal={cost.total} />
+
 
       <div className="grid gap-6 lg:grid-cols-2">
         {/* Cost donut + breakdown */}
@@ -738,5 +764,142 @@ function KV({ rows }: { rows: [string, string | number][] }) {
         </div>
       ))}
     </dl>
+  );
+}
+
+// ---------- ML Insights: Linear Regression + Genetic Algorithm ----------
+function MLInsights({ input, actualTotal }: { input: CalcInput; actualTotal: number }) {
+  const [prediction, setPrediction] = useState<{ predicted: number; model: RegressionModel } | null>(null);
+  const [ga, setGa] = useState<GAResult | null>(null);
+  const [running, setRunning] = useState(false);
+
+  useEffect(() => {
+    // Train + predict on each new result
+    setPrediction(predictCost(input));
+    setGa(null);
+  }, [input]);
+
+  const runGA = () => {
+    const target = input.budget && input.budget > 0 ? input.budget : Math.round(actualTotal * 0.9);
+    setRunning(true);
+    setTimeout(() => {
+      setGa(geneticOptimize(input, target));
+      setRunning(false);
+    }, 30);
+  };
+
+  const diff = prediction ? prediction.predicted - actualTotal : 0;
+  const diffPct = prediction ? (diff / actualTotal) * 100 : 0;
+
+  return (
+    <div className="grid gap-6 lg:grid-cols-2">
+      {/* Linear Regression */}
+      <div className="rounded-2xl border border-border bg-card p-7 shadow-[var(--shadow-card)]">
+        <div className="mb-5 flex items-center gap-2">
+          <Brain className="h-5 w-5 text-accent" />
+          <h3 className="text-lg font-semibold">Linear Regression — Cost Prediction</h3>
+        </div>
+        {prediction && (
+          <>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <Mini label="ML Predicted Cost" value={formatINR(prediction.predicted)} />
+              <Mini
+                label="Variance vs Estimate"
+                value={`${diff >= 0 ? "+" : ""}${formatINR(diff)} (${diffPct.toFixed(1)}%)`}
+                color={Math.abs(diffPct) > 10 ? "oklch(0.6 0.22 27)" : "oklch(0.65 0.15 160)"}
+              />
+            </div>
+            <p className="mt-4 rounded-xl bg-secondary/60 p-4 text-sm">
+              Trained on <strong>{prediction.model.samples}</strong> synthetic project records using the normal-equation
+              method. Model fit <strong>R² = {prediction.model.r2.toFixed(4)}</strong>. Features: area, floors, location
+              factor, quality factor.
+            </p>
+            <details className="mt-3 text-xs text-muted-foreground">
+              <summary className="cursor-pointer font-semibold">View learned coefficients (θ)</summary>
+              <ul className="mt-2 space-y-1 font-mono">
+                <li>bias: {prediction.model.theta[0].toFixed(2)}</li>
+                <li>area: {prediction.model.theta[1].toFixed(2)}</li>
+                <li>floors: {prediction.model.theta[2].toFixed(2)}</li>
+                <li>location: {prediction.model.theta[3].toFixed(2)}</li>
+                <li>quality: {prediction.model.theta[4].toFixed(2)}</li>
+              </ul>
+            </details>
+          </>
+        )}
+      </div>
+
+      {/* Genetic Algorithm */}
+      <div className="rounded-2xl border border-border bg-card p-7 shadow-[var(--shadow-card)]">
+        <div className="mb-5 flex items-center gap-2">
+          <Dna className="h-5 w-5 text-accent" />
+          <h3 className="text-lg font-semibold">Genetic Algorithm — Plan Optimizer</h3>
+        </div>
+        <p className="mb-4 text-sm text-muted-foreground">
+          Searches across <strong>quality, daily wage, material rate, and timeline</strong> to find the plan closest to
+          your {input.budget ? "target budget" : "10% reduced cost target"} using population evolution
+          (selection · crossover · mutation).
+        </p>
+        {!ga && (
+          <button
+            onClick={runGA}
+            disabled={running}
+            className="rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground shadow-[var(--shadow-elegant)] transition-transform hover:-translate-y-0.5 disabled:opacity-50"
+          >
+            {running ? "Evolving solutions…" : "Run Optimization"}
+          </button>
+        )}
+        {ga && (
+          <>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <Mini label="Optimized Total" value={formatINR(ga.best.total)} color="oklch(0.65 0.15 160)" />
+              <Mini label="Quality Tier" value={ga.best.quality.toUpperCase()} />
+              <Mini label="Daily Wage" value={formatINR(ga.best.daily_wage)} />
+              <Mini label="Material Rate" value={`${formatINR(ga.best.cost_per_sq_yard)}/syd`} />
+              <Mini label="Timeline" value={`${ga.best.days} days`} />
+              <Mini label="Fitness Score" value={ga.best.fitness.toFixed(4)} />
+            </div>
+            <div className="mt-4 rounded-xl bg-secondary/60 p-4 text-xs text-muted-foreground">
+              Evolved <strong>{ga.populationSize}</strong> candidates across <strong>{ga.generations}</strong>{" "}
+              generations. Improved budget gap by{" "}
+              <strong style={{ color: "oklch(0.55 0.18 160)" }}>{ga.improvementPct.toFixed(1)}%</strong> vs your input
+              plan.
+            </div>
+            {/* Convergence sparkline */}
+            <GAConvergence history={ga.history} />
+            <button
+              onClick={runGA}
+              className="mt-3 text-xs font-semibold text-accent hover:underline"
+            >
+              Re-run optimization
+            </button>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function GAConvergence({ history }: { history: GAResult["history"] }) {
+  const w = 320;
+  const h = 70;
+  const totals = history.map((p) => p.bestTotal);
+  const min = Math.min(...totals);
+  const max = Math.max(...totals);
+  const points = history
+    .map((p, i) => {
+      const x = (i / (history.length - 1)) * w;
+      const y = h - ((p.bestTotal - min) / (max - min || 1)) * h;
+      return `${x.toFixed(1)},${y.toFixed(1)}`;
+    })
+    .join(" ");
+  return (
+    <div className="mt-4">
+      <div className="mb-1 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+        Convergence (best total per generation)
+      </div>
+      <svg width="100%" height={h} viewBox={`0 0 ${w} ${h}`} className="rounded bg-secondary/40">
+        <polyline points={points} fill="none" stroke="oklch(0.55 0.18 255)" strokeWidth="2" />
+      </svg>
+    </div>
   );
 }
