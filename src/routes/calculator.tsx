@@ -1,5 +1,5 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
 import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
 import {
@@ -11,6 +11,8 @@ import {
   type FloorPlan,
   type Suggestion,
 } from "@/lib/construction";
+import { predictCost, geneticOptimize, type GAResult, type RegressionModel } from "@/lib/ml";
+import { getSession } from "@/lib/auth";
 import {
   Calculator as CalcIcon,
   Users,
@@ -28,6 +30,8 @@ import {
   Lightbulb,
   Info,
   PiggyBank,
+  Brain,
+  Dna,
 } from "lucide-react";
 
 export const Route = createFileRoute("/calculator")({
@@ -45,6 +49,15 @@ export const Route = createFileRoute("/calculator")({
 });
 
 function CalculatorPage() {
+  const navigate = useNavigate();
+  const [authChecked, setAuthChecked] = useState(false);
+  useEffect(() => {
+    if (!getSession()) {
+      navigate({ to: "/login" });
+    } else {
+      setAuthChecked(true);
+    }
+  }, [navigate]);
   const [form, setForm] = useState<CalcInput>({
     built_up_area: 1000,
     floors: "G+2",
@@ -69,6 +82,15 @@ function CalculatorPage() {
       50,
     );
   };
+
+  if (!authChecked) {
+    return (
+      <div className="min-h-screen bg-background">
+        <SiteHeader />
+        <div className="flex min-h-[60vh] items-center justify-center text-sm text-muted-foreground">Checking access…</div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
