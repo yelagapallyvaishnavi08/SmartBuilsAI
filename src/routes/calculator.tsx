@@ -239,7 +239,7 @@ function CalculatorPage() {
           </div>
         </form>
 
-        {result && <Results result={result} />}
+        {result && <Results result={result} input={form} />}
       </section>
 
       <SiteFooter />
@@ -261,7 +261,7 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
   );
 }
 
-function Results({ result }: { result: CalcResult }) {
+function Results({ result, input }: { result: CalcResult; input: CalcInput }) {
   const { workers, timeline, cost, materials, blueprint, schedule, assumptions, location, suggestions, budget } = result;
   return (
     <div id="results" className="mt-12 space-y-8">
@@ -295,6 +295,10 @@ function Results({ result }: { result: CalcResult }) {
 
       {/* AI suggestions */}
       <SuggestionsCard suggestions={suggestions} />
+
+      {/* ML: Linear Regression + Genetic Algorithm */}
+      <MLInsights input={input} actualTotal={cost.total} />
+
 
       <div className="grid gap-6 lg:grid-cols-2">
         {/* Cost donut + breakdown */}
