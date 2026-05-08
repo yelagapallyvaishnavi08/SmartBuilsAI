@@ -12,7 +12,7 @@ import {
   type Suggestion,
 } from "@/lib/construction";
 import { predictCost, geneticOptimize, type GAResult, type RegressionModel } from "@/lib/ml";
-import { getSession } from "@/lib/auth";
+import { getSession, saveHistory } from "@/lib/auth";
 import {
   Calculator as CalcIcon,
   Users,
@@ -51,13 +51,6 @@ export const Route = createFileRoute("/calculator")({
 function CalculatorPage() {
   const navigate = useNavigate();
   const [authChecked, setAuthChecked] = useState(false);
-  useEffect(() => {
-    if (!getSession()) {
-      navigate({ to: "/login" });
-    } else {
-      setAuthChecked(true);
-    }
-  }, [navigate]);
   const [form, setForm] = useState<CalcInput>({
     built_up_area: 1000,
     floors: "G+2",
@@ -71,12 +64,47 @@ function CalculatorPage() {
   });
   const [result, setResult] = useState<CalcResult | null>(null);
 
+  useEffect(() => {
+    if (!getSession()) {
+      navigate({ to: "/login" });
+      return;
+    }
+    setAuthChecked(true);
+    // Optionally preload a project from history
+    try {
+      const raw = sessionStorage.getItem("sba_load_project");
+      if (raw) {
+        sessionStorage.removeItem("sba_load_project");
+        const loaded = JSON.parse(raw) as CalcInput;
+        setForm((f) => ({ ...f, ...loaded }));
+        const r = calculate(loaded);
+        setResult(r);
+      }
+    } catch { /* ignore */ }
+  }, [navigate]);
+
   const update = <K extends keyof CalcInput>(k: K, v: CalcInput[K]) =>
     setForm((f) => ({ ...f, [k]: v }));
 
   const onSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    setResult(calculate(form));
+    const r = calculate(form);
+    setResult(r);
+    const session = getSession();
+    if (session) {
+      saveHistory({
+        email: session.email,
+        label: `${form.built_up_area} sq.yd · ${form.floors} · ${r.location.name}`,
+        input: form,
+        summary: {
+          total: r.cost.total,
+          days: r.timeline.days,
+          workers: r.workers.total,
+          location: r.location.name,
+          quality: r.assumptions.quality,
+        },
+      });
+    }
     setTimeout(
       () => document.getElementById("results")?.scrollIntoView({ behavior: "smooth" }),
       50,
