@@ -1,8 +1,11 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { Link } from "@tanstack/react-router";
-import { ArrowRight, Calculator, FileText, Hammer, Sparkles, ShieldCheck, Clock } from "lucide-react";
+import { useEffect, useState } from "react";
+import { ArrowRight, Calculator, FileText, Hammer, Sparkles, ShieldCheck, Clock, History, Trash2, MapPin, Wallet } from "lucide-react";
 import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
+import { getSession, getHistory, deleteHistory, type Session, type ProjectHistoryItem } from "@/lib/auth";
+import { formatINR } from "@/lib/construction";
 import heroImg from "@/assets/hero-construction.jpg";
 
 export const Route = createFileRoute("/")({
@@ -18,9 +21,93 @@ export const Route = createFileRoute("/")({
 });
 
 function HomePage() {
+  const navigate = useNavigate();
+  const [session, setSession] = useState<Session | null>(null);
+  const [checked, setChecked] = useState(false);
+  const [history, setHistory] = useState<ProjectHistoryItem[]>([]);
+
+  useEffect(() => {
+    const s = getSession();
+    if (!s) {
+      navigate({ to: "/login" });
+      return;
+    }
+    setSession(s);
+    setHistory(getHistory(s.email));
+    setChecked(true);
+  }, [navigate]);
+
+  const removeItem = (id: string) => {
+    if (!session) return;
+    deleteHistory(session.email, id);
+    setHistory(getHistory(session.email));
+  };
+
+  const openItem = (item: ProjectHistoryItem) => {
+    sessionStorage.setItem("sba_load_project", JSON.stringify(item.input));
+    navigate({ to: "/calculator" });
+  };
+
+  if (!checked) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background text-sm text-muted-foreground">
+        Loading…
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-background">
       <SiteHeader />
+
+      {/* Recent projects strip */}
+      <section className="border-b border-border bg-secondary/30">
+        <div className="mx-auto max-w-7xl px-6 py-8">
+          <div className="mb-4 flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2">
+              <History className="h-5 w-5 text-accent" />
+              <h2 className="text-lg font-semibold">Welcome back, {session?.name.split(" ")[0]}</h2>
+              <span className="text-sm text-muted-foreground">· Your recent projects</span>
+            </div>
+            <Link to="/calculator" className="text-sm font-semibold text-accent hover:underline">+ New project</Link>
+          </div>
+          {history.length === 0 ? (
+            <div className="rounded-2xl border border-dashed border-border bg-card p-8 text-center">
+              <p className="text-sm text-muted-foreground">No projects yet — your saved estimates will show up here.</p>
+              <Link to="/calculator" className="mt-3 inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground">
+                Plan your first project <ArrowRight className="h-4 w-4" />
+              </Link>
+            </div>
+          ) : (
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              {history.slice(0, 6).map((h) => (
+                <div key={h.id} className="group flex flex-col rounded-2xl border border-border bg-card p-5 shadow-[var(--shadow-card)] transition-all hover:-translate-y-0.5 hover:shadow-[var(--shadow-elegant)]">
+                  <div className="flex items-start justify-between gap-2">
+                    <div>
+                      <div className="text-sm font-semibold">{h.label}</div>
+                      <div className="mt-0.5 text-xs text-muted-foreground">{new Date(h.savedAt).toLocaleString()}</div>
+                    </div>
+                    <button onClick={() => removeItem(h.id)} aria-label="Delete" className="rounded-md p-1 text-muted-foreground opacity-0 transition-opacity hover:bg-secondary hover:text-destructive group-hover:opacity-100">
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  </div>
+                  <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
+                    <span className="inline-flex items-center gap-1"><MapPin className="h-3 w-3" />{h.summary.location}</span>
+                    <span>· {h.summary.quality}</span>
+                    <span>· {h.summary.days}d</span>
+                    <span>· {h.summary.workers} workers</span>
+                  </div>
+                  <div className="mt-3 flex items-center justify-between">
+                    <span className="inline-flex items-center gap-1 text-sm font-semibold"><Wallet className="h-4 w-4 text-accent" />{formatINR(h.summary.total)}</span>
+                    <button onClick={() => openItem(h)} className="rounded-lg bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground">Open</button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </section>
+
 
       {/* Hero */}
       <section className="relative overflow-hidden">

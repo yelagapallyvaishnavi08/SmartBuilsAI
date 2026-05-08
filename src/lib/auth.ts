@@ -73,3 +73,50 @@ export function getSession(): Session | null {
     return null;
   }
 }
+
+// ---------------- Project history (per user) ----------------
+const HISTORY_KEY = "sba_history_v1";
+
+export interface ProjectHistoryItem {
+  id: string;
+  email: string;
+  savedAt: number;
+  label: string;
+  input: unknown;
+  summary: { total: number; days: number; workers: number; location: string; quality: string };
+}
+
+function readAllHistory(): ProjectHistoryItem[] {
+  if (typeof window === "undefined") return [];
+  try { return JSON.parse(localStorage.getItem(HISTORY_KEY) || "[]"); } catch { return []; }
+}
+function writeAllHistory(items: ProjectHistoryItem[]) {
+  localStorage.setItem(HISTORY_KEY, JSON.stringify(items));
+}
+
+export function getHistory(email: string): ProjectHistoryItem[] {
+  return readAllHistory().filter((h) => h.email === email).sort((a, b) => b.savedAt - a.savedAt);
+}
+
+export function saveHistory(item: Omit<ProjectHistoryItem, "id" | "savedAt">): ProjectHistoryItem {
+  const all = readAllHistory();
+  const entry: ProjectHistoryItem = { ...item, id: crypto.randomUUID(), savedAt: Date.now() };
+  all.unshift(entry);
+  // cap per user at 25
+  const userItems = all.filter((h) => h.email === item.email);
+  if (userItems.length > 25) {
+    const remove = new Set(userItems.slice(25).map((h) => h.id));
+    writeAllHistory(all.filter((h) => !remove.has(h.id)));
+  } else {
+    writeAllHistory(all);
+  }
+  return entry;
+}
+
+export function deleteHistory(email: string, id: string) {
+  writeAllHistory(readAllHistory().filter((h) => !(h.email === email && h.id === id)));
+}
+
+export function clearHistory(email: string) {
+  writeAllHistory(readAllHistory().filter((h) => h.email !== email));
+}
